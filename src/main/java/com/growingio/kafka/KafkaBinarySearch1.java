@@ -17,14 +17,14 @@ import java.util.*;
  * Created by foolchi on 01/08/15.
  * Binary search for kafka message
  */
-public class KafkaBinarySearch {
+public class KafkaBinarySearch1 {
 
     private String topic;
     private List<PartitionMetadata> partitionMetadatas;
     private List<String> brokers;
     private int port;
 
-    public KafkaBinarySearch(String topic, List<String> brokers, int port) {
+    public KafkaBinarySearch1(String topic, List<String> brokers, int port) {
         this.topic = topic;
         this.brokers = brokers;
         this.port = port;
@@ -35,7 +35,7 @@ public class KafkaBinarySearch {
         }
     }
 
-    public long search(String dest, BinaryComparator comparator, int partition) {
+    public long search(BinaryComparator comparator, int partition) {
         if (null == partitionMetadatas || partitionMetadatas.size() == 0) {
             System.out.println("Cannot find topic metadata");
             return -1;
@@ -43,7 +43,7 @@ public class KafkaBinarySearch {
 
         for (PartitionMetadata partitionMetadata : partitionMetadatas) {
             if (partitionMetadata.partitionId() == partition) {
-                long offset = search(partitionMetadata, dest, comparator);
+                long offset = search(partitionMetadata, comparator);
                 if (offset != -1)
                     return offset;
             }
@@ -51,14 +51,14 @@ public class KafkaBinarySearch {
         return -1;
     }
 
-    public long search(String dest, BinaryComparator comparator) {
+    public long search(BinaryComparator comparator) {
         if (null == partitionMetadatas || partitionMetadatas.size() == 0) {
             System.out.println("Cannot find topic metadata");
             return -1;
         }
 
         for (PartitionMetadata partitionMetadata : partitionMetadatas) {
-            long offset = search(partitionMetadata, dest, comparator);
+            long offset = search(partitionMetadata, comparator);
             if (offset != -1)
                 return offset;
         }
@@ -66,7 +66,7 @@ public class KafkaBinarySearch {
         return -1;
     }
 
-    public long search(PartitionMetadata metadata, String dest, BinaryComparator comparator) {
+    public long search(PartitionMetadata metadata, BinaryComparator comparator) {
 
         long startOffset = 0, maxOffset = getMaxOffset(metadata), middleOffset = (startOffset + maxOffset) / 2;
 
@@ -89,7 +89,7 @@ public class KafkaBinarySearch {
                 ByteBuffer payload = messageAndOffset.message().payload();
                 byte[] bytes = new byte[payload.limit()];
                 payload.get(bytes);
-                String msg = null;
+                String msg;
                 try {
                     msg = new String(bytes, "UTF-8");
                 } catch (UnsupportedEncodingException e) {
@@ -98,7 +98,7 @@ public class KafkaBinarySearch {
                 }
 
                 System.out.println(msg);
-                int compareResult = comparator.compare(msg, dest);
+                int compareResult = comparator.compare(msg);
                 if (compareResult == 0) {
                     consumer.close();
                     return middleOffset;
@@ -115,32 +115,32 @@ public class KafkaBinarySearch {
         return -1;
     }
 
-    public long fuzzySearch(String dest, FuzzyBinaryComparator comparator) {
+    public long fuzzySearch(FuzzyBinaryComparator comparator) {
         if (null == partitionMetadatas || partitionMetadatas.size() == 0) {
             System.out.println("Cannot find topic metadata");
             return -1;
         }
 
         for (PartitionMetadata partitionMetadata : partitionMetadatas) {
-            long offset = fuzzySearch(partitionMetadata, dest, comparator);
+            long offset = fuzzySearch(partitionMetadata, comparator);
             if (offset != -1)
                 return offset;
         }
         return -1;
     }
 
-    public long fuzzySearch(PartitionMetadata metadata, String dest, FuzzyBinaryComparator comparator) {
-        long middleOffset = search(metadata, dest, comparator);
+    public long fuzzySearch(PartitionMetadata metadata, FuzzyBinaryComparator comparator) {
+        long middleOffset = search(metadata, comparator);
         if (middleOffset == -1)
             return middleOffset;
 
-        long leftOffset = sequenceSearch(metadata, dest, comparator, middleOffset, -1);
+        long leftOffset = sequenceSearch(metadata, comparator, middleOffset, -1);
         if (leftOffset != -1)
             return leftOffset;
-        return sequenceSearch(metadata, dest, comparator, middleOffset + 1, 1);
+        return sequenceSearch(metadata, comparator, middleOffset + 1, 1);
     }
 
-    public long sequenceSearch(PartitionMetadata metadata, String dest, FuzzyBinaryComparator comparator, long startOffset, int step) {
+    public long sequenceSearch(PartitionMetadata metadata, FuzzyBinaryComparator comparator, long startOffset, int step) {
         long maxOffset = getMaxOffset(metadata);
 
         String broker = metadata.leader().host();
@@ -167,12 +167,12 @@ public class KafkaBinarySearch {
                     e.printStackTrace();
                 }
                 System.out.println(msg);
-                if (comparator.exactCompare(msg, dest) == 0) {
+                if (comparator.exactCompare(msg) == 0) {
                     consumer.close();
                     return startOffset;
                 }
 
-                if (comparator.compare(msg, dest) * step > 0) {
+                if (comparator.compare(msg) * step > 0) {
                     consumer.close();
                     return -1;
                 }
