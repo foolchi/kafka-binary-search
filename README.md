@@ -21,7 +21,7 @@ val offset = binarySearch.search(new MyBinaryComparator(dest)) // 返回offset�
 
 ```
 
-其中`MyBinaryComparator`是一个实现了`BinaryComparator`特质的类，这个类只有一个方法:`compare(String msg)`,用于自定义比较方法。比如消息可能是一个带时间戳的复杂`json`格式，需要在`compare`方法中提取时间戳再进行比较。或则消息内并不含时间戳，但是含有一个单调递增的事件`id`，都可以在`compare`中定义具体的比较行为。
+其中`MyBinaryComparator`是一个实现了`BinaryComparator`特质的类，这个类只有一个方法:`compare(msg : String)`,用于自定义比较方法。比如消息可能是一个带时间戳的复杂`json`格式，需要在`compare`方法中提取时间戳再进行比较。或则消息内并不含时间戳，但是含有一个单调递增的事件`id`，都可以在`compare`中定义具体的比较行为。
 
 ###模糊查询
 如果时间戳并不是严格单调递增，但是不同时间戳误差在一定范围内，那么我们可以使用模糊查询。模糊查询首先使用二分查找的方法找到某个跟查找目标误差在一定范围内的消息，然后以这个消息为中心分别向左右按顺序查找，直到查找到该消息或则左右的误差已经超过我们定义的范围。使用方法与正常查找基本一致:
