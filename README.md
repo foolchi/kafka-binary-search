@@ -10,15 +10,14 @@ Kafka的每个topic都是按照发送时间严格排序的，所以如果我们�
 [Kafka Consumer Group Example](https://cwiki.apache.org/confluence/display/KAFKA/Consumer+Group+Example)
 
 ###用法
-```java
+```scala
 
-String topic = "test"; // kafka topic name
-List<String> brokers = new ArrayList<String>();
-brokers.add("localhost"); // kafka broker name
-int port = 9092; // kafka broker port
-String dest = "xxx"; //查找目标
-KafkaBinarySearch binarySearch = new KafkaBinarySearch(topic, brokers, port);
-long offset = binarySearch.search(dest, new MyBinaryComparator()) // 返回offset，-1代表不存在
+val topic = "test" // kafka topic name
+val broker = "localhost" // kafka broker name
+val port = 9092 // kafka broker port
+val dest = "xxx" //查找目标
+val binarySearch = new KafkaBinarySearch(topic, broker, port)
+val offset = binarySearch.search(new MyBinaryComparator(dest)) // 返回offset，-1代表不存在
 
 ```
 
@@ -27,15 +26,14 @@ long offset = binarySearch.search(dest, new MyBinaryComparator()) // 返回offse
 ###模糊查询
 如果时间戳并不是严格单调递增，但是不同时间戳误差在一定范围内，那么我们可以使用模糊查询。模糊查询首先使用二分查找的方法找到某个跟查找目标误差在一定范围内的消息，然后以这个消息为中心分别向左右按顺序查找，直到查找到该消息或则左右的误差已经超过我们定义的范围。使用方法与正常查找基本一致:
 
-```java
+```scala
 
-String topic = "test"; // kafka topic name
-List<String> brokers = new ArrayList<String>();
-brokers.add("localhost"); // kafka broker name
-int port = 9092; // kafka broker port
-String dest = "xxx"; //查找目标
-KafkaBinarySearch binarySearch = new KafkaBinarySearch(topic, brokers, port);
-long offset = binarySearch.fuzzySearch(dest, new MyFuzzyBinaryComparator()) // 返回offset，-1代表不存在
+val topic = "test" // kafka topic name
+val broker = "localhost" // kafka broker name
+val port = 9092 // kafka broker port
+val dest = "xxx" //查找目标
+val binarySearch = new KafkaBinarySearch(topic, broker, port)
+val offset = binarySearch.fuzzySearch(new MyFuzzyBinaryComparator(dest)) // 返回offset，-1代表不存在
 
 ```
 
@@ -51,6 +49,6 @@ long offset = binarySearch.fuzzySearch(dest, new MyFuzzyBinaryComparator()) // �
 * 对于每个时间戳使用二分查找/模糊查找获得对应的offset，比较是否与保存的一致
 
 ###TODO
-* 因为Kafka的API文档都是Java为主，所以就先用Java写了，后面可以考虑改成Scala
-* `BinaryComparator`和`FuzzyBinaryComparator`可以把要查找的`dest`作为一个类的变量，这样就不用每次`compare`的时候都要`parse`
+* ~~因为Kafka的API文档都是Java为主，所以就先用Java写了，后面可以考虑改成Scala~~
+* ~~`BinaryComparator`和`FuzzyBinaryComparator`可以把要查找的`dest`作为一个类的变量，这样就不用每次`compare`的时候都要`parse`~~
 * `fuzzySearch`中调用的`sequenceSearch`函数还可以优化速度，方法是一次读取多条消息然后依次比较
