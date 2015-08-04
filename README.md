@@ -38,7 +38,7 @@ val offset = binarySearch.fuzzySearch(new MyFuzzyBinaryComparator(dest)) // 返�
 ```
 
 
-其中`MyFuzzyBinaryComparator`是一个实现了`FuzzyBinaryComparator`特质的类，这个接口有两个方法`compare`和`exactCompare`，前一个是带误差的比较，后面一个是不带误差的准确比较。
+其中`MyFuzzyBinaryComparator`是一个实现了`FuzzyBinaryComparator`特质的类，这个类有两个方法`compare`和`exactCompare`，前一个是带误差的比较，后面一个是不带误差的准确比较。
 
 ###Test
 我写了一个BinarySearchTest的测试类，里面测试了二分查找和模糊查找，测试步骤:

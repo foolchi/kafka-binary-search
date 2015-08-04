@@ -5,7 +5,7 @@ package com.growingio.kafka
  * 带模糊匹配的时间戳比较类
  * maxDiff是默认的最大误差(+/-)
  */
-class TimestampFuzzyComparator (dest : String, val maxDiff : Long)extends FuzzyBinaryComparator{
+class TimestampFuzzyComparator (dest : String, val maxDiff : Long) extends FuzzyBinaryComparator{
   private val destTime = dest.toLong
 
   override def exactCompare(msg: String): Int = {
