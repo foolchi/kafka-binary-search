@@ -24,6 +24,13 @@
             <artifactId>kafka_2.10</artifactId>
             <version>${kafka.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20140107</version>
+        </dependency>
+
     </dependencies>
 
     <build>

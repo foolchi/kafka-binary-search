@@ -9,9 +9,7 @@ import kafka.consumer.SimpleConsumer
  * Created by foolchi on 03/08/15.
  * Kafka二分查找
  */
-class KafkaBinarySearch (val topic : String, val host : String, val port : Int){
-  private val topics = Array{topic}
-  private val partitionMetadatas = getTopicMetadata
+class KafkaBinarySearch (topic : String, host : String, port : Int) extends KafkaSearch(topic, host, port){
 
   // 二分查找
   def search(comparator: BinaryComparator) : Long = {
@@ -30,11 +28,14 @@ class KafkaBinarySearch (val topic : String, val host : String, val port : Int){
   }
 
   def search(metadata: PartitionMetadata, comparator: BinaryComparator) : Long = {
-    var start = 0L
-    var end = getMaxOffset(metadata)
+    var start = getOffset(metadata, OffsetRequest.EarliestTime)
+    var end = getOffset(metadata, OffsetRequest.LatestTime)
     var middle = (start + end) / 2
 
+    println(end)
+
     val broker = metadata.leader.get
+    println(broker)
     val partition = metadata.partitionId
     val clientName = "Search_" + topic + "_" + partition
     val consumer = new SimpleConsumer(broker.host, broker.port, 10000, 64 * 1024, clientName)
@@ -45,6 +46,7 @@ class KafkaBinarySearch (val topic : String, val host : String, val port : Int){
         .addFetch(topic, partition, middle, 1000)
         .build()
       val fetchResponse = consumer.fetch(request)
+      println(start, end)
 
       val messageAndOffset = fetchResponse.messageSet(topic, partition).head
       val payload = messageAndOffset.message.payload
@@ -101,9 +103,11 @@ class KafkaBinarySearch (val topic : String, val host : String, val port : Int){
   // step = 1向右，-1向左
   def sequenceSearch(metadata: PartitionMetadata, comparator: FuzzyBinaryComparator, start : Long, step : Long) : Long = {
     var current = start
-    val end = getMaxOffset(metadata)
+    val end = getOffset(metadata, OffsetRequest.LatestTime)
 
+    println(end)
     val broker = metadata.leader.get
+    println(broker)
     val partition = metadata.partitionId
     val clientName = "Search_" + topic + "_" + partition
 
@@ -137,51 +141,5 @@ class KafkaBinarySearch (val topic : String, val host : String, val port : Int){
 
     consumer.close()
     -1
-  }
-
-  def getMaxOffset(metadata: PartitionMetadata) : Long = {
-    val broker = metadata.leader.get
-    val clientName = "getMaxOffset_" + topic + "_" + metadata.partitionId
-
-    val consumer = new SimpleConsumer(broker.host, broker.port, 10000, 64 * 1024, clientName)
-    val topicAndPartition = new TopicAndPartition(topic, metadata.partitionId)
-    val requestInfo = Map(topicAndPartition -> new PartitionOffsetRequestInfo(OffsetRequest.LatestTime, 1))
-    val request = new OffsetRequest(requestInfo, OffsetRequest.CurrentVersion, clientId = clientName)
-    val response = consumer.getOffsetsBefore(request)
-    response.partitionErrorAndOffsets
-      .get(topicAndPartition)
-      .get.offsets.head
-  }
-
-  def findLeader() : Broker = {
-      val consumer = new SimpleConsumer(host, port, 10000, 64 * 1024, "find_leader")
-      val resp = consumer.send(new TopicMetadataRequest(topics, 1)) // 1是correlationId，用来匹配client和server
-      consumer.close()
-
-      val metaDatas = resp.topicsMetadata
-      for (mdata <- metaDatas) {
-        for (part <- mdata.partitionsMetadata) {
-          val leader = part.leader
-          if (leader.isDefined) {
-            return leader.get
-          }
-        }
-      }
-
-    null
-  }
-
-  def getTopicMetadata() : Seq[PartitionMetadata] = {
-    val leader = findLeader()
-    val consumer = new SimpleConsumer(leader.host, leader.port, 10000, 64 * 1024, "getTopicMetadata")
-    val resp = consumer.send(new TopicMetadataRequest(topics, 77))
-    consumer.close()
-
-    val metaDatas = resp.topicsMetadata
-    if (metaDatas != null && metaDatas.nonEmpty) {
-      return metaDatas.head.partitionsMetadata
-    }
-
-    null
   }
 }
